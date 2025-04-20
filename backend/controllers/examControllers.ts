@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import Question from "../models/Question";
 import ExamResult from "../models/ExamResult";
+const { ObjectId } = require("mongodb");
 
 /**
  * @desc Get all questions
@@ -103,5 +104,21 @@ export const getUserResults = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching results:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getstudentResults = async (req: Request, res: Response) => {
+  const studentId = req.params?.studentId;
+
+  try {
+    const examResult = await ExamResult.findOne({ userId: studentId });
+
+    res.status(200).json({
+      result: examResult,
+    });
+  } catch (error) {
+    res.status(500).json({
+      err: error,
+    });
   }
 };

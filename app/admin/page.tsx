@@ -223,13 +223,22 @@ import { useSocket } from "@/hooks/useSocket";
 import { ExamStatsCompact, ExamStatsDashboard } from "@/components/examStats";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, Users } from "lucide-react";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+
+interface ExamSubmission {
+  studentId: string;
+  completedAt: Date;
+  answers: Record<string, string>;
+  socketId?: string;
+  totalScore?: number;
+}
 export default function Home() {
   const { socket, isConnected, examStats } = useSocket();
-
+  const [submissions, setSubmissions] = useState<ExamSubmission[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -238,6 +247,19 @@ export default function Home() {
   const [uploading, setUploading] = useState(false);
   const [students, setStudents] = useState([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/exams/results");
+        const data = await response.json();
+        setSubmissions(data.results);
+      } catch (error) {
+        console.error("Failed to fetch submissions", error);
+      }
+    };
+    fetchSubmissions();
+  }, [examStats]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -296,6 +318,14 @@ export default function Home() {
     password: "password123",
   };
 
+  useEffect(() => {
+    if (
+      localStorage.getItem("email") === validCredentials.email &&
+      localStorage.getItem("pass") === validCredentials.password
+    ) {
+      setIsAuthenticated(true);
+    }
+  }, []);
   const handleLogin = (e: any) => {
     e.preventDefault();
 
@@ -304,6 +334,8 @@ export default function Home() {
       password === validCredentials.password
     ) {
       setIsAuthenticated(true);
+      localStorage.setItem("email", email);
+      localStorage.setItem("pass", password);
       setError("");
     } else {
       setError("Invalid credentials. Please try again.");
@@ -447,10 +479,42 @@ export default function Home() {
       >
         Start Exam
       </button> */}
-
-      <div className="mt-4">
-        <p>Socket Status: {isConnected ? "Connected" : "Disconnected"}</p>
+      <div className="container mx-auto p-8">
+        <h1 className="text-4xl font-bold mb-8">Exam Submissions</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Submissions</CardTitle>{" "}
+          </CardHeader>{" "}
+          <CardContent>
+            {" "}
+            <ScrollArea className="h-full w-full">
+              {submissions.map((submission, index) => (
+                <div
+                  key={index}
+                  className="border-b p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">
+                        Student: {submission.studentId}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(submission.completedAt).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Total Score :{submission.totalScore}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
+      {/* <div className="mt-4">
+        <p>Socket Status: {isConnected ? "Connected" : "Disconnected"}</p>
+      </div> */}
     </div>
   );
 }

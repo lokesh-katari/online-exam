@@ -22,6 +22,9 @@ export function setupSocketConnection(io: Server) {
     // Event to mark student as starting exam
     socket.on("start-exam", (userData) => {
       // Add or update student in the tracking object
+
+      console.log("start-exam hit event", socket.id);
+
       examStats.studentDetails.set(socket.id, {
         id: socket.id,
         email: userData.email,

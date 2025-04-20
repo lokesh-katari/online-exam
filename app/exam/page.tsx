@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useSocket } from "@/hooks/useSocket";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Question {
   _id: string;
@@ -18,6 +19,8 @@ interface Question {
 
 export default function ExamPage() {
   const { socket } = useSocket();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<Record<string, Question[]>>({
     mathematics: [],
     physics: [],
@@ -41,12 +44,6 @@ export default function ExamPage() {
     }
 
     // Emit exam start event when component mounts
-    if (socket) {
-      socket.emit("start-exam", {
-        studentId,
-        email: `${studentId}@example.com`, // You might want to replace this with actual user email
-      });
-    }
 
     // Fetch questions
     const fetchQuestions = async () => {
@@ -84,6 +81,14 @@ export default function ExamPage() {
       clearInterval(timer);
     };
   }, [socket]);
+  useEffect(() => {
+    if (socket && studentId) {
+      socket.emit("start-exam", {
+        studentId,
+        email: `${studentId}@example.com`,
+      });
+    }
+  }, [socket, studentId]);
 
   const submitExam = async () => {
     if (isSubmitted) return;
@@ -124,6 +129,11 @@ export default function ExamPage() {
           title: "Exam Submitted",
           description: "Your exam has been successfully submitted",
         });
+        const currentParams = new URLSearchParams(searchParams);
+        currentParams.set("studentId", studentId);
+        console.log(currentParams, "these are currentparams");
+
+        router.push(`/exam/examresult?${currentParams.toString()}`);
       } else {
         throw new Error("Submission failed");
       }
