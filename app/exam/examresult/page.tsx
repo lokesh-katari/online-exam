@@ -95,7 +95,7 @@ export default function ExamResultsDashboard() {
                 {grade !== "F" ? (
                   <div className="bg-green-100 text-green-800 p-4 rounded-md">
                     <p className="text-xl font-medium">
-                      Congratulations! You passed the exam.
+                      Congratu lations! You passed the exam.
                     </p>
                   </div>
                 ) : (
